@@ -113,7 +113,6 @@ void setup()
         return;
     }
 
-    //   MDNS.begin("demo-server");
     ws.onEvent(onWsEvent);
 
     pinMode(IRSENSOR, INPUT);
@@ -182,6 +181,9 @@ void setup()
                           }
                       });
     server.begin();
+    MDNS.begin("esp32");
+    MDNS.addService("_http", "_tcp", 80);
+    MDNS.addServiceTxt("_http", "_tcp", "board", "ESP32");
     dht.begin();
 
     dbInit();
