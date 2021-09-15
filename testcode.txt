@@ -1,0 +1,50 @@
+    server.on("/edata", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                  String dd = "{";
+                  dd += "\"username\"";
+                  dd += ":\"";
+                  dd += esid.c_str();
+                  dd += "\",";
+                  dd += "\"password\"";
+                  dd += ":\"";
+                  dd += epass.c_str();
+                  dd += "\"}";
+                  request->send_P(200, "text/html", dd.c_str());
+              });
+
+    server.addHandler(new AsyncCallbackJsonWebHandler(
+        "/deletefile", [](AsyncWebServerRequest *request, JsonVariant &json)
+        {
+            const JsonObject &jsonObj = json.as<JsonObject>();
+
+            if (jsonObj["filename"])
+            {
+
+                String filename = jsonObj["filename"];
+                deleteFile(filename.c_str());
+            }
+            else
+            {
+                Serial.println("No Data provided");
+            }
+            request->send(200, "OK");
+        }));
+    server.on("/eclear", HTTP_DELETE, [](AsyncWebServerRequest *request)
+              {
+                  clearEEprom();
+                  delay(500);
+                  ESP.restart();
+                  request->send(200, "OK");
+              });
+
+    server.on("/clear", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                  //   clearFile();
+                  if (SPIFFS.format())
+                  {
+                      Serial.println("format done");
+                  }
+                  String fileSystem = fsCheck();
+
+                  request->send_P(200, "text/html", fileSystem.c_str());
+              });

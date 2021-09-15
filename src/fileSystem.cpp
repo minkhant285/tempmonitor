@@ -6,27 +6,17 @@ String fsCheck()
 {
     unsigned int totalBytes = SPIFFS.totalBytes();
     unsigned int usedBytes = SPIFFS.usedBytes();
-    Serial.println("===== File system info =====");
-
-    Serial.print("Total space:      ");
-    Serial.print(totalBytes);
-    Serial.println("byte");
-
-    Serial.print("Total space used: ");
-    Serial.print(usedBytes);
-    Serial.println("byte");
-
-    Serial.println();
-
     // Open dir folder
     File dir = SPIFFS.open("/");
     // List file at root
-    // listFilesInDir(dir);
+    String filelist = listFilesInDir(dir);
 
     String json = "{\"totalSpace\":";
     json += totalBytes;
     json += ",\"usedBytes\":";
     json += usedBytes;
+    json += ",";
+    json += filelist.substring(0, filelist.length() - 1);
     json += "}";
     return json;
 }
@@ -48,6 +38,11 @@ void writeFile(String sensorData)
     }
 }
 
+void deleteFile(String filename)
+{
+    SPIFFS.remove(filename.c_str());
+}
+
 void clearFile()
 {
     File file = SPIFFS.open("/data.csv", "w");
@@ -64,8 +59,9 @@ void clearFile()
     }
 }
 
-void listFilesInDir(File dir, int numTabs)
+String listFilesInDir(File dir)
 {
+    String filelist;
     while (true)
     {
 
@@ -74,22 +70,21 @@ void listFilesInDir(File dir, int numTabs)
         {
             break;
         }
-        for (uint8_t i = 0; i < numTabs; i++)
-        {
-            Serial.print('\t');
-        }
-        Serial.print(entry.name());
+        String filename = entry.name();
+        filename.remove(0, 1);
+        filelist += "\"";
+        filelist += filename;
+        filelist += "\":";
         if (entry.isDirectory())
         {
-            Serial.println("/");
-            listFilesInDir(entry, numTabs + 1);
+            listFilesInDir(entry);
         }
         else
         {
-            // display zise for file, nothing for directory
-            Serial.print("\t\t");
-            Serial.println(entry.size(), DEC);
+            filelist += entry.size();
+            filelist += ",";
         }
         entry.close();
     }
+    return filelist.c_str();
 }

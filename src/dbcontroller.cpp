@@ -1,12 +1,33 @@
 #include <db.h>
 #include <Arduino.h>
 #include <typeinfo>
+#include <SPIFFS.h>
 
 const char *data = "Callback function called";
 char *zErrMsg = 0;
 sqlite3 *db1;
 
 String resultData;
+
+void dbInit()
+{
+
+    // SPIFFS.remove("/archer.db");
+    sqlite3_initialize();
+
+    if (db_open("/spiffs/archer.db", &db1))
+    {
+        return;
+    }
+
+    int rc = db_exec(db1, "CREATE TABLE IF NOT EXISTS tempmonitor (tid INTEGER PRIMARY KEY, date TEXT, tempF REAL, tempC REAL)");
+    if (rc != SQLITE_OK)
+    {
+        sqlite3_close(db1);
+        Serial.println("fail to create table");
+    }
+}
+
 static int callback(void *data, int argc, char **argv, char **azColName)
 {
     String result;
@@ -39,55 +60,34 @@ int db_open(const char *filename, sqlite3 **db)
         return rc;
     }
     else
-    {
-        Serial.printf("Opened database successfully\n");
-    }
-    return rc;
+        return rc;
 }
 
 int db_exec(sqlite3 *db, const char *sql)
 {
 
-    // Serial.println(sql);
-    long start = micros();
+    // long start = micros();
     int rc = sqlite3_exec(db, sql, callback, (void *)data, &zErrMsg);
     if (rc != SQLITE_OK)
     {
         Serial.printf("SQL error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
     }
-    else
-    {
-        Serial.printf("Operation done successfully\n");
-    }
-    Serial.print(F("Time taken:"));
-    Serial.println(micros() - start);
-    // Serial.println(rc);
+    // Serial.print(F("Time taken:"));
+    // Serial.println(micros() - start);
     return rc;
 }
 
-void dbInit()
+void insert(String tempC, String tempF)
 {
-    if (db_open("/spiffs/test1.db", &db1))
-        return;
-    createTable();
-}
-
-void createTable()
-{
-    int rc = db_exec(db1, "CREATE TABLE IF NOT EXISTS tempmonitor (id INTEGER, date VARCHAR, tempF REAL, tempC REAL );");
-    if (rc != SQLITE_OK)
-    {
-        sqlite3_close(db1);
-        Serial.println("table creation error");
-        return;
-    }
-}
-
-void insert()
-{
-
-    int rc = db_exec(db1, "INSERT INTO tempmonitor VALUES (1, '28-5-1998',98.5,33.4);");
+    String insertText = "INSERT INTO tempmonitor (date,tempF,tempC) VALUES (";
+    insertText += "date('now')";
+    insertText += ",";
+    insertText += tempC.c_str();
+    insertText += ",";
+    insertText += tempF.c_str();
+    insertText += ")";
+    int rc = db_exec(db1, insertText.c_str());
     if (rc != SQLITE_OK)
     {
         sqlite3_close(db1);
