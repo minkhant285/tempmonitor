@@ -3,7 +3,9 @@
         <script>
             var Socket;
             function init() {
-                Socket = new WebSocket("ws://" + "192.168.100.69" + ":80/ws");
+                Socket = new WebSocket(
+                    "ws://" + window.location.hostname + ":80/ws"
+                );
                 Socket.onmessage = function (event) {
                     // receive the color data from the server
                     var data = JSON.parse(event.data);
