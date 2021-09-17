@@ -130,6 +130,14 @@ void setup()
                   request->send_P(200, "text/html", fileSystem.c_str());
               });
 
+    server.on("/eclear", HTTP_DELETE, [](AsyncWebServerRequest *request)
+              {
+                  clearEEprom();
+                  delay(500);
+                  ESP.restart();
+                  request->send(200, "OK");
+              });
+
     server.on("/select", HTTP_GET, [](AsyncWebServerRequest *request)
               {
                   String greet = select();

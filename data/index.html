@@ -1,29 +1,331 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
     <head>
-        <script>
-            var Socket;
-            function init() {
-                Socket = new WebSocket(
-                    "ws://" + window.location.hostname + ":80/ws"
-                );
-                Socket.onmessage = function (event) {
-                    // receive the color data from the server
-                    var data = JSON.parse(event.data);
-                    console.log(data);
-                    document.getElementById("tempC").innerHTML =
-                        data.temperatureC;
-                    document.getElementById("tempF").innerHTML =
-                        data.temperatureF;
-                };
-            }
-        </script>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>TempMonitor</title>
+
+        <script src="./js/jquery.min.js"></script>
+        <script src="./js/data.js"></script>
+        <script src="./js/chart.min.js" type="text/javascript"></script>
+        <script src="./js/bootstrap.min.js"></script>
+
+        <link rel="stylesheet" href="./css/bootstrap.min.css" />
+        <link href="./css/style.css" rel="stylesheet" />
     </head>
-    <body onload="javascript:init()">
-        <h4>Websocket client served from the Sensor Board!</h4>
-        <p>
-            TempC:<span id="tempC"> null </span> TempF:<span id="tempF">
-                null
-            </span>
-        </p>
+    <body
+        onload="javascript:init();javascript:getDBData(); javascript:getStorage();"
+    >
+        <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+            <a class="navbar-brand" href="/">
+                <img
+                    src="./thermometer.png"
+                    width="30"
+                    height="30"
+                    class="d-inline-block align-top"
+                    alt=""
+                />Dashboard
+            </a>
+
+            <button
+                class="navbar-toggler"
+                type="button"
+                data-toggle="collapse"
+                data-target="#navbarNavAltMarkup"
+                aria-controls="navbarNavAltMarkup"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+            >
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                <div class="navbar-nav">
+                    <a
+                        class="nav-item nav-link"
+                        data-toggle="modal"
+                        data-target="#exampleModal"
+                        href="fs"
+                        >Setting</a
+                    >
+                    <a class="nav-item nav-link" href="contact">About</a>
+                    <a class="nav-item nav-link" href="contact">Contact Us</a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container container-md-12 pt-0">
+            <div class="header-container row p-2 mt-0">
+                <div class="col-sm-6 col-md-6 col-lg-3 col-6 p-1">
+                    <div
+                        class="card mt-0"
+                        style="
+                            height: 25vh;
+                            background-color: #d0f1fd;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: space-evenly;
+                        "
+                    >
+                        <div
+                            class="card p-3"
+                            style="
+                                background-color: #b5dcf5;
+                                border-radius: 50px;
+                            "
+                        >
+                            <img src="./assets/thermometer.svg" />
+                        </div>
+                        <div
+                            style="
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                            "
+                        >
+                            <span
+                                id="tempF"
+                                class="header-content-text"
+                                style="color: #0f377a"
+                            >
+                                Not Detect!
+                            </span>
+                            <span style="color: #0f377a"> Temperauture </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-md-6 col-lg-3 col-6 p-1">
+                    <div
+                        class="card mt-0"
+                        style="
+                            height: 25vh;
+                            background-color: #c6f4cd;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: space-evenly;
+                        "
+                    >
+                        <div
+                            class="card p-3"
+                            style="
+                                background-color: #afeabe;
+                                border-radius: 50px;
+                            "
+                        >
+                            <img src="./assets/thermometer.svg" />
+                        </div>
+                        <div
+                            style="
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                            "
+                        >
+                            <span
+                                id="tempC"
+                                class="header-content-text"
+                                style="color: #165249"
+                            >
+                                Not Detect!
+                            </span>
+                            <span style="color: #165249"> Temperauture </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-md-6 col-lg-3 col-6 p-1">
+                    <div
+                        class="card mt-0"
+                        style="
+                            height: 25vh;
+                            background-color: #fff6cd;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: space-evenly;
+                        "
+                    >
+                        <div
+                            class="card p-3"
+                            style="
+                                background-color: #f4e5af;
+                                border-radius: 50px;
+                            "
+                        >
+                            <img src="./assets/person.svg" />
+                        </div>
+                        <div
+                            style="
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                            "
+                        >
+                            <span
+                                id="people"
+                                class="header-content-text"
+                                style="color: #7b5217"
+                            >
+                                Not Detect!
+                            </span>
+                            <span style="color: #7b5217"> People </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-md-6 col-lg-3 col-6 p-1">
+                    <div
+                        class="card mt-0"
+                        style="
+                            height: 25vh;
+                            background-color: #ffe7d9;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: space-evenly;
+                        "
+                    >
+                        <div
+                            class="card p-3"
+                            style="
+                                background-color: #f3c5bd;
+                                border-radius: 50px;
+                            "
+                        >
+                            <img src="./assets/storage.svg" />
+                        </div>
+                        <div
+                            style="
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                            "
+                        >
+                            <span
+                                id="storage"
+                                class="header-content-text"
+                                style="color: #7b202e"
+                            >
+                                Not Detect!
+                            </span>
+                            <span style="color: #7b202e"> Stroage </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row p-2 pt-0 mt-0">
+                <div class="col-sm-12 col-12 col-md-5 p-1 pt-0">
+                    <div class="d-flex flex-column">
+                        <div class="card mt-0 mb-2" style="height: 190px">
+                            <div class="card-header">Ram Usage</div>
+                        </div>
+                        <div class="card mt-0" style="height: 400px">
+                            <div class="card-header">Stroage</div>
+
+                            <div style="align-self: center">
+                                <canvas id="countries" class="mt-3"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7 col-12 col-sm-12 p-1">
+                    <div class="card mt-0">
+                        <div class="card-header">Record</div>
+                        <div
+                            id="div1"
+                            style="height: 550px; overflow: auto"
+                        ></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div
+            class="modal fade"
+            id="exampleModal"
+            tabindex="-1"
+            role="dialog"
+            aria-labelledby="exampleModalLabel"
+            aria-hidden="true"
+        >
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">
+                            Change WiFi info
+                        </h5>
+                        <button
+                            type="button"
+                            class="close"
+                            data-dismiss="modal"
+                            aria-label="Close"
+                        >
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="myform">
+                            <div class="form-group">
+                                <label for="ssid">Wifi Name</label>
+                                <input
+                                    required
+                                    type="text"
+                                    class="form-control"
+                                    id="ssid"
+                                    aria-describedby="ssidHelp"
+                                    placeholder="Enter ssid"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input
+                                    required
+                                    type="password"
+                                    class="form-control"
+                                    id="password"
+                                    placeholder="Password"
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                data-dismiss="modal"
+                            >
+                                Close
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                Submit
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </body>
+    <script>
+        const pieData = {
+            labels: ["Used", "Total Space"],
+            datasets: [
+                {
+                    label: "Storage",
+                    data: [100, 50],
+                    backgroundColor: ["rgb(255, 99, 132)", "rgb(54, 162, 235)"],
+                    hoverOffset: 2,
+                },
+            ],
+        };
+
+        var ctx = document.getElementById("countries").getContext("2d");
+        var myChart = new Chart(ctx, {
+            type: "pie",
+            data: pieData,
+            options: { responsive: false, maintainAspectRatio: true },
+        });
+    </script>
 </html>
