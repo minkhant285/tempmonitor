@@ -204,8 +204,9 @@ void loop()
     int irSensor = digitalRead(IRSENSOR);
     float tempC = dht.readTemperature();
     float tempF = dht.readTemperature(true);
+    int isSensorDetect = !digitalRead(WifiModePin);
 
-        if (irSensor)
+    if (irSensor && isSensorDetect)
     {
 
         if (isnan(tempC) || isnan(tempF))
@@ -214,7 +215,7 @@ void loop()
         }
         else
         {
-            String writeData = "4,14-09-2021,";
+            String writeData = "14-09-2021,";
             writeData += tempC;
             writeData += ",";
             writeData += tempF;
@@ -226,14 +227,26 @@ void loop()
 
     if (wsClient != nullptr && wsClient->canSend())
     {
+
         String json = "{\"temperatureC\":";
-        json += tempC;
+        json += isSensorDetect ? tempC : 0.0;
         json += ",\"temperatureF\":";
-        json += tempF;
+        json += isSensorDetect ? tempF : 0.0;
+        if (irSensor && isSensorDetect)
+        {
+            json += ",";
+            json += "\"sensorData\":";
+            json += "{\"tempC\":";
+            json += tempC;
+            json += ",\"tempF\":";
+            json += tempF;
+            json += ",\"date\":";
+            json += "\"4-09-2021\"}";
+        }
         json += "}";
         wsClient->text(json);
     }
 
-    delay(1000);
+    delay(500);
     ws.cleanupClients();
 }

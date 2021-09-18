@@ -1,9 +1,13 @@
 var Socket;
-var host = window.location.host;
+var host = "192.168.100.69";
 function init() {
     Socket = new WebSocket("ws://" + host + ":80/ws");
     Socket.onmessage = function (event) {
         var data = JSON.parse(event.data);
+        console.log(event.data);
+        if (data.sensorData) {
+            updateTable(data.sensorData);
+        }
         document.getElementById("tempC").innerHTML =
             data.temperatureC + "&#8451;";
         document.getElementById("tempF").innerHTML =
@@ -55,13 +59,18 @@ function gg(ssid, pass) {
         .then((result) => console.log(result));
 }
 
+function updateTable(sensorData) {
+    var tr = `<tr class=${colorSwitch(sensorData["tempF"])}>`;
+    // var td1 = "<td>" + sensorData["tid"] + "</td>";
+    var td2 = "<td>" + sensorData["date"] + "</td>";
+    var td3 = "<td>" + sensorData["tempC"] + "</td>";
+    var td4 = "<td>" + sensorData["tempF"] + "</td>";
+    $("#people").text(parseInt($("#people").text()) + 1);
+
+    $("#tableBody").append(tr + td2 + td3 + td4);
+}
+
 function getDBData() {
-    var x = document.createElement("TABLE");
-
-    x.setAttribute("id", "myTable");
-    x.setAttribute("border", "1");
-    document.body.appendChild(x);
-
     fetch("http://" + host + "/select", {
         headers: {
             "Content-Type": "application/json",
@@ -70,20 +79,15 @@ function getDBData() {
     })
         .then((response) => response.json())
         .then((res) => {
-            var people = res.length;
-            $("#people").text(people);
-            var tbl = $(
-                '<table class="table table-hover"/><thead><tr><th>Date</th><th>Temp &#8451;</th><th>Temp &#8457;</th></tr></thead><tbody>'
-            ).attr("id", "mytable");
-            $("#div1").append(tbl);
+            $("#people").text(res.length);
             for (var i = 0; i < res.length; i++) {
                 var tr = `<tr class=${colorSwitch(res[i]["tempF"])}>`;
                 var td1 = "<td>" + res[i]["tid"] + "</td>";
                 var td2 = "<td>" + res[i]["date"] + "</td>";
                 var td3 = "<td>" + res[i]["tempC"] + "</td>";
-                var td4 = "<td>" + res[i]["tempF"] + "</td></tr></tbody>";
+                var td4 = "<td>" + res[i]["tempF"] + "</td>";
 
-                $("#mytable").append(tr + td2 + td3 + td4);
+                $("#tableBody").append(tr + td2 + td3 + td4);
             }
         });
 }
