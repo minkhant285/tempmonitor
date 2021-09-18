@@ -130,6 +130,9 @@ void setup()
                   request->send_P(200, "text/html", fileSystem.c_str());
               });
 
+    server.on("/csv", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send_P(200, "text/html", readCSV().c_str()); });
+
     server.on("/eclear", HTTP_DELETE, [](AsyncWebServerRequest *request)
               {
                   clearEEprom();
@@ -142,6 +145,23 @@ void setup()
               {
                   String greet = select();
                   request->send_P(200, "text/html", greet.c_str());
+              });
+
+    server.on("/selectdrange", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                  int paramsNr = request->params();
+                  String arguments[2];
+
+                  for (int i = 0; i < paramsNr; i++)
+                  {
+
+                      AsyncWebParameter *p = request->getParam(i);
+                      arguments[i] = p->value();
+                  }
+
+                  String greet = selectDateRange(arguments[0].c_str(), arguments[1].c_str());
+
+                  request->send(200, "text/html", greet.c_str());
               });
 
     server.on("/delete", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -206,7 +226,7 @@ void loop()
     float tempF = dht.readTemperature(true);
     int isSensorDetect = !digitalRead(WifiModePin);
 
-    if (irSensor && isSensorDetect)
+    if (!irSensor && isSensorDetect)
     {
 
         if (isnan(tempC) || isnan(tempF))
@@ -219,9 +239,12 @@ void loop()
             writeData += tempC;
             writeData += ",";
             writeData += tempF;
-            writeFile(writeData);
-            Serial.println("pushed");
-            insert(String(tempC), String(tempF));
+            // writeFile(writeData);
+            if (tempF >= 92)
+            {
+                insert(String(tempC), String(tempF));
+                Serial.println("pushed");
+            }
         }
     }
 
@@ -232,7 +255,7 @@ void loop()
         json += isSensorDetect ? tempC : 0.0;
         json += ",\"temperatureF\":";
         json += isSensorDetect ? tempF : 0.0;
-        if (irSensor && isSensorDetect)
+        if (!irSensor && isSensorDetect && tempF >= 92)
         {
             json += ",";
             json += "\"sensorData\":";
@@ -247,6 +270,6 @@ void loop()
         wsClient->text(json);
     }
 
-    delay(500);
+    delay(1000);
     ws.cleanupClients();
 }

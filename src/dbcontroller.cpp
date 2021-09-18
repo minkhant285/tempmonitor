@@ -12,7 +12,6 @@ String resultData;
 void dbInit()
 {
 
-    // SPIFFS.remove("/archer.db");
     sqlite3_initialize();
 
     if (db_open("/spiffs/archer.db", &db1))
@@ -81,7 +80,7 @@ int db_exec(sqlite3 *db, const char *sql)
 void insert(String tempC, String tempF)
 {
     String insertText = "INSERT INTO tempmonitor (date,tempF,tempC) VALUES (";
-    insertText += "date('now')";
+    insertText += "1631781339";
     insertText += ",";
     insertText += tempC.c_str();
     insertText += ",";
@@ -109,6 +108,28 @@ void deleteData()
 String select()
 {
     int rc = db_exec(db1, "SELECT * FROM tempmonitor");
+
+    if (rc != SQLITE_OK)
+    {
+        sqlite3_close(db1);
+        Serial.println("fail to select  db");
+    }
+    String selectData = "[";
+    selectData += resultData.substring(0, resultData.length() - 1);
+    selectData += "]";
+    resultData = "";
+    return selectData;
+}
+
+String selectDateRange(String d1, String d2)
+{
+    String selectDrangeText = "SELECT * from tempmonitor where date(date,'unixepoch','localtime') >= \'";
+    selectDrangeText += d1.c_str();
+    selectDrangeText += "\' AND date(date,'unixepoch','localtime') <= \'";
+    selectDrangeText += d2.c_str();
+    selectDrangeText += "\'";
+
+    int rc = db_exec(db1, selectDrangeText.c_str());
 
     if (rc != SQLITE_OK)
     {

@@ -1,12 +1,19 @@
 var Socket;
 var host = "192.168.100.69";
+var storage;
 function init() {
     Socket = new WebSocket("ws://" + host + ":80/ws");
     Socket.onmessage = function (event) {
         var data = JSON.parse(event.data);
-        console.log(event.data);
         if (data.sensorData) {
             updateTable(data.sensorData);
+        }
+        if (data.temperatureF >= 32) {
+            document.getElementById("tempF").style.color = "red";
+            document.getElementById("tempC").style.color = "red";
+        } else {
+            document.getElementById("tempF").style.color = "#0f377a";
+            document.getElementById("tempC").style.color = "#165249";
         }
         document.getElementById("tempC").innerHTML =
             data.temperatureC + "&#8451;";
@@ -31,7 +38,15 @@ function getStorage() {
     })
         .then((response) => response.json())
         .then((res) => {
+            displayStorage([
+                100 / (res.totalSpace / res.usedBytes).toFixed(1),
+                (
+                    ((res.totalSpace - res.usedBytes) / res.totalSpace) *
+                    100
+                ).toFixed(1),
+            ]);
             let sotragePercent = 100 / (res.totalSpace / res.usedBytes);
+
             $("#storage").text(sotragePercent.toFixed(1) + "%");
         });
 }
@@ -79,15 +94,57 @@ function getDBData() {
     })
         .then((response) => response.json())
         .then((res) => {
+            console.log(res);
             $("#people").text(res.length);
             for (var i = 0; i < res.length; i++) {
                 var tr = `<tr class=${colorSwitch(res[i]["tempF"])}>`;
                 var td1 = "<td>" + res[i]["tid"] + "</td>";
-                var td2 = "<td>" + res[i]["date"] + "</td>";
+                var td2 =
+                    "<td>" +
+                    new Date(
+                        new Date(0).setUTCSeconds(res[i]["date"])
+                    ).toLocaleString() +
+                    "</td>";
                 var td3 = "<td>" + res[i]["tempC"] + "</td>";
                 var td4 = "<td>" + res[i]["tempF"] + "</td>";
 
                 $("#tableBody").append(tr + td2 + td3 + td4);
             }
         });
+}
+
+function displayStorage(showData) {
+    const pieData = {
+        labels: ["Used", "Available Space"],
+        datasets: [
+            {
+                label: "Storage",
+                data: showData,
+                backgroundColor: ["rgb(54, 162, 235)", "rgb(255, 99, 132)"],
+                hoverOffset: 2,
+            },
+        ],
+    };
+
+    let ctx = document.getElementById("countries").getContext("2d");
+    new Chart(ctx, {
+        type: "pie",
+        data: pieData,
+        options: {
+            responsive: false,
+            maintainAspectRatio: true,
+            plugins: {
+                datalabels: {
+                    borderWidth: 5,
+                    borderColor: "white",
+                    borderRadius: 8,
+                    color: 0,
+                    font: {
+                        weight: "bold",
+                    },
+                    backgroundColor: "lightgray",
+                },
+            },
+        },
+    });
 }

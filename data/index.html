@@ -10,6 +10,7 @@
 
         <script src="./js/chart.min.js" type="text/javascript"></script>
         <script src="./js/bootstrap.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.7.0"></script>
 
         <link rel="stylesheet" href="./css/bootstrap.min.css" />
         <link href="./css/style.css" rel="stylesheet" />
@@ -85,11 +86,7 @@
                                 align-items: center;
                             "
                         >
-                            <span
-                                id="tempF"
-                                class="header-content-text"
-                                style="color: #0f377a"
-                            >
+                            <span id="tempF" class="header-content-text">
                                 Not Detect!
                             </span>
                             <span style="color: #0f377a"> Temperauture </span>
@@ -125,11 +122,7 @@
                                 align-items: center;
                             "
                         >
-                            <span
-                                id="tempC"
-                                class="header-content-text"
-                                style="color: #165249"
-                            >
+                            <span id="tempC" class="header-content-text">
                                 Not Detect!
                             </span>
                             <span style="color: #165249"> Temperauture </span>
@@ -317,13 +310,13 @@
         </div>
     </body>
     <script src="./js/data.js"></script>
-    <script>
+    <!-- <script>
         const pieData = {
             labels: ["Used", "Total Space"],
             datasets: [
                 {
                     label: "Storage",
-                    data: [100, 50],
+                    data: [50, 50],
                     backgroundColor: ["rgb(54, 162, 235)", "rgb(255, 99, 132)"],
                     hoverOffset: 2,
                 },
@@ -336,5 +329,5 @@
             data: pieData,
             options: { responsive: false, maintainAspectRatio: true },
         });
-    </script>
+    </script> -->
 </html>

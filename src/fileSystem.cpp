@@ -21,6 +21,27 @@ String fsCheck()
     return json;
 }
 
+String readCSV()
+{
+    String csvdata;
+    File file2 = SPIFFS.open("/data.csv");
+
+    if (!file2)
+    {
+        Serial.println("Failed to open file for reading");
+        return "error";
+    }
+
+    while (file2.available())
+    {
+
+        csvdata += file2.read();
+    }
+
+    file2.close();
+    return csvdata;
+}
+
 void writeFile(String sensorData)
 {
     File file = SPIFFS.open("/data.csv", "a");
