@@ -205,7 +205,7 @@ void loop()
     float tempC = dht.readTemperature();
     float tempF = dht.readTemperature(true);
 
-    if (irSensor)
+        if (irSensor)
     {
 
         if (isnan(tempC) || isnan(tempF))
@@ -235,4 +235,5 @@ void loop()
     }
 
     delay(1000);
+    ws.cleanupClients();
 }
