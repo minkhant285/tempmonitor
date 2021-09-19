@@ -77,11 +77,11 @@ int db_exec(sqlite3 *db, const char *sql)
     return rc;
 }
 
-void insert(String tempC, String tempF)
+void insert(String date, String tempC, String tempF)
 {
-    String insertText = "INSERT INTO tempmonitor (date,tempF,tempC) VALUES (";
-    insertText += "1631781339";
-    insertText += ",";
+    String insertText = "INSERT INTO tempmonitor (date,tempF,tempC) VALUES (\'";
+    insertText += date.c_str();
+    insertText += "\',";
     insertText += tempC.c_str();
     insertText += ",";
     insertText += tempF.c_str();

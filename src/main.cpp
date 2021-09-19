@@ -34,6 +34,9 @@ AsyncWebSocketClient *wsClient;
 
 bool isSTAMode = false;
 
+TaskHandle_t Task1;
+TaskHandle_t Task2;
+
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
                AwsEventType type, void *arg, uint8_t *data, size_t len)
 {
@@ -46,8 +49,6 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
         wsClient = nullptr;
     }
 }
-
-// void listFilesInDir(File dir, int numTabs = 1);
 
 void waitForWiFiConnectOrReboot(bool printOnSerial = true)
 {
@@ -76,200 +77,248 @@ void waitForWiFiConnectOrReboot(bool printOnSerial = true)
         Serial.println(WiFi.localIP());
     }
 }
+void Task1code(void *pvParameters)
+{
+    Serial.print("Task 1 Running on Core: ");
+    Serial.println(xPortGetCoreID());
+
+    while (true)
+    {
+        // server.on("/select", HTTP_GET, [](AsyncWebServerRequest *request)
+        //           {
+        //               String greet = select();
+        //               request->send_P(200, "text/html", greet.c_str());
+        //           });
+        Serial.println("task1");
+        delay(1000);
+    }
+}
+
+void Task2code(void *pvParameters)
+{
+    Serial.print("Task 1 Running on Core: ");
+    Serial.println(xPortGetCoreID());
+
+    while (true)
+    {
+        Serial.println("task2");
+        delay(2000);
+        // server.on("/csv", HTTP_GET, [](AsyncWebServerRequest *request)
+        //           { request->send_P(200, "text/html", readCSV().c_str()); });
+    }
+}
 
 void setup()
 {
     Serial.begin(115200);
     Serial.println("Booted");
-    EEPROM.begin(512);
+    // EEPROM.begin(512);
 
-    esid = getSsid();
-    epass = getPassword();
+    xTaskCreatePinnedToCore(
+        Task1code,
+        "Task1",
+        10000,
+        NULL,
+        1,
+        &Task1,
+        0);
 
-    pinMode(WifiModePin, INPUT);
-    if (digitalRead(WifiModePin))
-    {
-        isSTAMode = true;
-    }
+    xTaskCreatePinnedToCore(
+        Task2code,
+        "Task2",
+        10000,
+        NULL,
+        1,
+        &Task2,
+        1);
 
-    // initialize timer function
-    if (isSTAMode && esid != "" && epass != "")
-    {
-        WiFi.begin(esid.c_str(), epass.c_str());
-        waitForWiFiConnectOrReboot();
-    }
-    else
-    {
+    // esid = getSsid();
+    // epass = getPassword();
 
-        WiFi.softAPConfig(local_ip, gateway, subnet);
-        WiFi.softAP(APSSID, APPASSWORD);
-        Serial.print("AP IP address: ");
-        Serial.println(WiFi.softAPIP());
-    }
+    // pinMode(WifiModePin, INPUT);
+    // if (!digitalRead(WifiModePin))
+    // {
+    //     isSTAMode = true;
+    // }
 
-    if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED))
-    {
-        Serial.println("Failed to mount file system");
-        return;
-    }
+    // // initialize timer function
+    // if (isSTAMode && esid != "" && epass != "")
+    // {
+    //     WiFi.begin(esid.c_str(), epass.c_str());
+    //     waitForWiFiConnectOrReboot();
+    // }
+    // else
+    // {
 
-    ws.onEvent(onWsEvent);
+    //     WiFi.softAPConfig(local_ip, gateway, subnet);
+    //     WiFi.softAP(APSSID, APPASSWORD);
+    //     Serial.print("AP IP address: ");
+    //     Serial.println(WiFi.softAPIP());
+    // }
 
-    pinMode(IRSENSOR, INPUT);
+    // if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED))
+    // {
+    //     Serial.println("Failed to mount file system");
+    //     return;
+    // }
 
-    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
-    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods",
-                                         "GET, PUT");
-    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
+    // ws.onEvent(onWsEvent);
 
-    server.addHandler(&ws);
+    // pinMode(IRSENSOR, INPUT);
 
-    server.on("/fs", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-                  String fileSystem = fsCheck();
-                  request->send_P(200, "text/html", fileSystem.c_str());
-              });
+    // DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+    // DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods",
+    //                                      "GET, PUT");
+    // DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
 
-    server.on("/csv", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send_P(200, "text/html", readCSV().c_str()); });
+    // server.addHandler(&ws);
 
-    server.on("/eclear", HTTP_DELETE, [](AsyncWebServerRequest *request)
-              {
-                  clearEEprom();
-                  delay(500);
-                  ESP.restart();
-                  request->send(200, "OK");
-              });
+    // server.on("/fs", HTTP_GET, [](AsyncWebServerRequest *request)
+    //           {
+    //               String fileSystem = fsCheck();
+    //               request->send_P(200, "text/html", fileSystem.c_str());
+    //           });
 
-    server.on("/select", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-                  String greet = select();
-                  request->send_P(200, "text/html", greet.c_str());
-              });
+    // // server.on("/csv", HTTP_GET, [](AsyncWebServerRequest *request)
+    // //           { request->send_P(200, "text/html", readCSV().c_str()); });
 
-    server.on("/selectdrange", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-                  int paramsNr = request->params();
-                  String arguments[2];
+    // server.on("/eclear", HTTP_DELETE, [](AsyncWebServerRequest *request)
+    //           {
+    //               clearEEprom();
+    //               delay(500);
+    //               ESP.restart();
+    //               request->send(200, "OK");
+    //           });
 
-                  for (int i = 0; i < paramsNr; i++)
-                  {
+    // // server.on("/select", HTTP_GET, [](AsyncWebServerRequest *request)
+    // //           {
+    // //               String greet = select();
+    // //               request->send_P(200, "text/html", greet.c_str());
+    // //           });
 
-                      AsyncWebParameter *p = request->getParam(i);
-                      arguments[i] = p->value();
-                  }
+    // server.on("/selectdrange", HTTP_GET, [](AsyncWebServerRequest *request)
+    //           {
+    //               int paramsNr = request->params();
+    //               String arguments[2];
 
-                  String greet = selectDateRange(arguments[0].c_str(), arguments[1].c_str());
+    //               for (int i = 0; i < paramsNr; i++)
+    //               {
 
-                  request->send(200, "text/html", greet.c_str());
-              });
+    //                   AsyncWebParameter *p = request->getParam(i);
+    //                   arguments[i] = p->value();
+    //               }
 
-    server.on("/delete", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-                  deleteData();
-                  request->send_P(200, "text/html", "deleted");
-              });
+    //               String greet = selectDateRange(arguments[0].c_str(), arguments[1].c_str());
 
-    server.addHandler(new AsyncCallbackJsonWebHandler(
-        "/wconfig", [](AsyncWebServerRequest *request, JsonVariant &json)
-        {
-            const JsonObject &jsonObj = json.as<JsonObject>();
+    //               request->send(200, "text/html", greet.c_str());
+    //           });
 
-            if (jsonObj["ssid"] && jsonObj["pass"])
-            {
+    // server.on("/delete", HTTP_GET, [](AsyncWebServerRequest *request)
+    //           {
+    //               deleteData();
+    //               request->send_P(200, "text/html", "deleted");
+    //           });
 
-                String qsid = jsonObj["ssid"];
-                String qpass = jsonObj["pass"];
+    // server.addHandler(new AsyncCallbackJsonWebHandler(
+    //     "/wconfig", [](AsyncWebServerRequest *request, JsonVariant &json)
+    //     {
+    //         const JsonObject &jsonObj = json.as<JsonObject>();
 
-                setCredentials(qsid, qpass);
+    //         if (jsonObj["ssid"] && jsonObj["pass"])
+    //         {
 
-                request->send(200, "OK");
-                delay(1000);
-                ESP.restart();
-            }
-            else
-            {
-                Serial.println("No Data provided");
-            }
-            request->send(200, "OK");
-        }));
+    //             String qsid = jsonObj["ssid"];
+    //             String qpass = jsonObj["pass"];
 
-    server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+    //             setCredentials(qsid, qpass);
 
-    server.onNotFound([](AsyncWebServerRequest *request)
-                      {
-                          if (request->method() == HTTP_OPTIONS)
-                          {
-                              request->send(200);
-                          }
-                          else
-                          {
-                              Serial.println("Not found");
-                              request->send(404, "Not found");
-                          }
-                      });
-    server.begin();
-    MDNS.begin("esp32");
-    MDNS.addService("_http", "_tcp", 80);
-    MDNS.addServiceTxt("_http", "_tcp", "board", "ESP32");
-    dht.begin();
+    //             request->send(200, "OK");
+    //             delay(1000);
+    //             ESP.restart();
+    //         }
+    //         else
+    //         {
+    //             Serial.println("No Data provided");
+    //         }
+    //         request->send(200, "OK");
+    //     }));
 
-    dbInit();
+    // server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+
+    // server.onNotFound([](AsyncWebServerRequest *request)
+    //                   {
+    //                       if (request->method() == HTTP_OPTIONS)
+    //                       {
+    //                           request->send(200);
+    //                       }
+    //                       else
+    //                       {
+    //                           Serial.println("Not found");
+    //                           request->send(404, "Not found");
+    //                       }
+    //                   });
+    // server.begin();
+    // MDNS.begin("esp32");
+    // MDNS.addService("_http", "_tcp", 80);
+    // MDNS.addServiceTxt("_http", "_tcp", "board", "ESP32");
+    // dht.begin();
+
+    // dbInit();
 }
-
-boolean irSensorStatus = false;
 
 void loop()
 {
-    int irSensor = digitalRead(IRSENSOR);
-    float tempC = dht.readTemperature();
-    float tempF = dht.readTemperature(true);
-    int isSensorDetect = !digitalRead(WifiModePin);
+    // int irSensor = digitalRead(IRSENSOR);
+    // float tempC = dht.readTemperature();
+    // float tempF = dht.readTemperature(true);
+    // String insertDate = "1632027049";
 
-    if (!irSensor && isSensorDetect)
-    {
+    // if (!irSensor)
+    // {
 
-        if (isnan(tempC) || isnan(tempF))
-        {
-            Serial.println("Failed to read sensor data");
-        }
-        else
-        {
-            String writeData = "14-09-2021,";
-            writeData += tempC;
-            writeData += ",";
-            writeData += tempF;
-            // writeFile(writeData);
-            if (tempF >= 92)
-            {
-                insert(String(tempC), String(tempF));
-                Serial.println("pushed");
-            }
-        }
-    }
+    //     if (isnan(tempC) || isnan(tempF))
+    //     {
+    //         Serial.println("Failed to read sensor data");
+    //     }
+    //     else
+    //     {
+    //         // writeData += tempC;
+    //         // writeData += ",";
+    //         // writeData += tempF;
+    //         // writeFile(writeData);
+    //         if (tempF >= 92)
+    //         {
+    //             insert(insertDate.c_str(), String(tempC), String(tempF));
+    //             Serial.println("pushed");
+    //         }
+    //     }
+    // }
 
-    if (wsClient != nullptr && wsClient->canSend())
-    {
+    // if (wsClient != nullptr && wsClient->canSend())
+    // {
 
-        String json = "{\"temperatureC\":";
-        json += isSensorDetect ? tempC : 0.0;
-        json += ",\"temperatureF\":";
-        json += isSensorDetect ? tempF : 0.0;
-        if (!irSensor && isSensorDetect && tempF >= 92)
-        {
-            json += ",";
-            json += "\"sensorData\":";
-            json += "{\"tempC\":";
-            json += tempC;
-            json += ",\"tempF\":";
-            json += tempF;
-            json += ",\"date\":";
-            json += "\"4-09-2021\"}";
-        }
-        json += "}";
-        wsClient->text(json);
-    }
+    //     String json = "{\"temperatureC\":";
+    //     json += !irSensor ? tempC : 0.0;
+    //     json += ",\"temperatureF\":";
+    //     json += !irSensor ? tempF : 0.0;
+    //     if (!irSensor && tempF >= 92)
+    //     {
+    //         json += ",";
+    //         json += "\"sensorData\":";
+    //         json += "{\"tempC\":";
+    //         json += tempC;
+    //         json += ",\"tempF\":";
+    //         json += tempF;
+    //         json += ",\"date\":";
+    //         json += "\"";
+    //         json += insertDate;
+    //         json += "\"}";
+    //     }
+    //     json += "}";
+    //     wsClient->text(json);
+    // }
 
-    delay(1000);
-    ws.cleanupClients();
+    // ws.cleanupClients();
+
+    // delay(1000);
 }

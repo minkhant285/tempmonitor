@@ -1,6 +1,6 @@
 var Socket;
 var host = "192.168.100.69";
-var storage;
+var lastId;
 function init() {
     Socket = new WebSocket("ws://" + host + ":80/ws");
     Socket.onmessage = function (event) {
@@ -8,7 +8,8 @@ function init() {
         if (data.sensorData) {
             updateTable(data.sensorData);
         }
-        if (data.temperatureF >= 32) {
+
+        if (data.temperatureF >= 92) {
             document.getElementById("tempF").style.color = "red";
             document.getElementById("tempC").style.color = "red";
         } else {
@@ -76,13 +77,19 @@ function gg(ssid, pass) {
 
 function updateTable(sensorData) {
     var tr = `<tr class=${colorSwitch(sensorData["tempF"])}>`;
-    // var td1 = "<td>" + sensorData["tid"] + "</td>";
-    var td2 = "<td>" + sensorData["date"] + "</td>";
+    var td1 = "<td>" + (parseInt(lastId) + 1) + "</td>";
+    var td2 =
+        "<td>" +
+        new Date(
+            new Date(0).setUTCSeconds(sensorData["date"])
+        ).toLocaleString() +
+        "</td>";
     var td3 = "<td>" + sensorData["tempC"] + "</td>";
     var td4 = "<td>" + sensorData["tempF"] + "</td>";
+    lastId = parseInt(lastId) + 1;
     $("#people").text(parseInt($("#people").text()) + 1);
 
-    $("#tableBody").append(tr + td2 + td3 + td4);
+    $("#tableBody").append(tr + td1 + td2 + td3 + td4);
 }
 
 function getDBData() {
@@ -94,8 +101,8 @@ function getDBData() {
     })
         .then((response) => response.json())
         .then((res) => {
-            console.log(res);
             $("#people").text(res.length);
+            lastId = res[res.length - 1]["tid"];
             for (var i = 0; i < res.length; i++) {
                 var tr = `<tr class=${colorSwitch(res[i]["tempF"])}>`;
                 var td1 = "<td>" + res[i]["tid"] + "</td>";
@@ -108,7 +115,7 @@ function getDBData() {
                 var td3 = "<td>" + res[i]["tempC"] + "</td>";
                 var td4 = "<td>" + res[i]["tempF"] + "</td>";
 
-                $("#tableBody").append(tr + td2 + td3 + td4);
+                $("#tableBody").append(tr + td1 + td2 + td3 + td4);
             }
         });
 }
