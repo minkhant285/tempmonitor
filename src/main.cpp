@@ -6,7 +6,7 @@
 #include <EEPROM.h>
 #include <credentials.h>
 #include <DHT.h>
-#include <LITTLEFS.h>
+#include <SPIFFS.h>
 
 #define DHT11PIN 4
 #define FORMAT_SPIFFS_IF_FAILED true
@@ -92,7 +92,6 @@ void setup()
         isSTAMode = true;
     }
 
-    // initialize timer function
     if (isSTAMode && esid != "" && epass != "")
     {
         WiFi.begin(esid.c_str(), epass.c_str());
@@ -108,7 +107,7 @@ void setup()
     }
 
     Serial.println(F("Inizializing FS..."));
-    if (LITTLEFS.begin())
+    if (SPIFFS.begin())
     {
         Serial.println(F("done."));
     }
@@ -128,14 +127,14 @@ void setup()
 
     server.addHandler(&ws);
 
-    // server.on("/fs", HTTP_GET, [](AsyncWebServerRequest *request)
-    //           {
-    //               String fileSystem = fsCheck();
-    //               request->send_P(200, "text/html", fileSystem.c_str());
-    //           });
+    server.on("/fs", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                  String fileSystem = fsCheck();
+                  request->send_P(200, "text/html", fileSystem.c_str());
+              });
 
-    // server.on("/csv", HTTP_GET, [](AsyncWebServerRequest *request)
-    //           { request->send_P(200, "text/html", readCSV().c_str()); });
+    server.on("/csv", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send_P(200, "text/html", readCSV().c_str()); });
 
     server.on("/eclear", HTTP_DELETE, [](AsyncWebServerRequest *request)
               {
@@ -198,7 +197,7 @@ void setup()
             request->send(200, "OK");
         }));
 
-    server.serveStatic("/", LITTLEFS, "/").setDefaultFile("index.html");
+    server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
 
     server.onNotFound([](AsyncWebServerRequest *request)
                       {
@@ -218,7 +217,7 @@ void setup()
     // MDNS.addServiceTxt("_http", "_tcp", "board", "ESP32");
     dht.begin();
 
-    // dbInit();
+    dbInit();
 }
 
 void loop()

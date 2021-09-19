@@ -16,6 +16,7 @@ void setCredentials(String Wssid, String Wpass)
 {
 
     Serial.println("writing eeprom ssid:");
+    clearEEprom();
     for (int i = 0; i < Wssid.length(); ++i)
     {
         EEPROM.write(i, Wssid[i]);
