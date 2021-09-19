@@ -1,13 +1,12 @@
 #include <Arduino.h>
 #include <AsyncJson.h>
 #include <ESPAsyncWebServer.h>
-#include <ESPmDNS.h>
-#include <SPIFFS.h>
 #include <fscheck.h>
 #include <db.h>
 #include <EEPROM.h>
 #include <credentials.h>
 #include <DHT.h>
+#include <LITTLEFS.h>
 
 #define DHT11PIN 4
 #define FORMAT_SPIFFS_IF_FAILED true
@@ -77,101 +76,57 @@ void waitForWiFiConnectOrReboot(bool printOnSerial = true)
         Serial.println(WiFi.localIP());
     }
 }
-void Task1code(void *pvParameters)
-{
-    Serial.print("Task 1 Running on Core: ");
-    Serial.println(xPortGetCoreID());
-
-    while (true)
-    {
-        // server.on("/select", HTTP_GET, [](AsyncWebServerRequest *request)
-        //           {
-        //               String greet = select();
-        //               request->send_P(200, "text/html", greet.c_str());
-        //           });
-        Serial.println("task1");
-        delay(1000);
-    }
-}
-
-void Task2code(void *pvParameters)
-{
-    Serial.print("Task 1 Running on Core: ");
-    Serial.println(xPortGetCoreID());
-
-    while (true)
-    {
-        Serial.println("task2");
-        delay(2000);
-        // server.on("/csv", HTTP_GET, [](AsyncWebServerRequest *request)
-        //           { request->send_P(200, "text/html", readCSV().c_str()); });
-    }
-}
 
 void setup()
 {
     Serial.begin(115200);
     Serial.println("Booted");
-    // EEPROM.begin(512);
+    EEPROM.begin(512);
 
-    xTaskCreatePinnedToCore(
-        Task1code,
-        "Task1",
-        10000,
-        NULL,
-        1,
-        &Task1,
-        0);
+    esid = getSsid();
+    epass = getPassword();
 
-    xTaskCreatePinnedToCore(
-        Task2code,
-        "Task2",
-        10000,
-        NULL,
-        1,
-        &Task2,
-        1);
+    pinMode(WifiModePin, INPUT);
+    if (!digitalRead(WifiModePin))
+    {
+        isSTAMode = true;
+    }
 
-    // esid = getSsid();
-    // epass = getPassword();
+    // initialize timer function
+    if (isSTAMode && esid != "" && epass != "")
+    {
+        WiFi.begin(esid.c_str(), epass.c_str());
+        waitForWiFiConnectOrReboot();
+    }
+    else
+    {
 
-    // pinMode(WifiModePin, INPUT);
-    // if (!digitalRead(WifiModePin))
-    // {
-    //     isSTAMode = true;
-    // }
+        WiFi.softAPConfig(local_ip, gateway, subnet);
+        WiFi.softAP(APSSID, APPASSWORD);
+        Serial.print("AP IP address: ");
+        Serial.println(WiFi.softAPIP());
+    }
 
-    // // initialize timer function
-    // if (isSTAMode && esid != "" && epass != "")
-    // {
-    //     WiFi.begin(esid.c_str(), epass.c_str());
-    //     waitForWiFiConnectOrReboot();
-    // }
-    // else
-    // {
+    Serial.println(F("Inizializing FS..."));
+    if (LITTLEFS.begin())
+    {
+        Serial.println(F("done."));
+    }
+    else
+    {
+        Serial.println(F("fail."));
+    }
 
-    //     WiFi.softAPConfig(local_ip, gateway, subnet);
-    //     WiFi.softAP(APSSID, APPASSWORD);
-    //     Serial.print("AP IP address: ");
-    //     Serial.println(WiFi.softAPIP());
-    // }
+    ws.onEvent(onWsEvent);
 
-    // if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED))
-    // {
-    //     Serial.println("Failed to mount file system");
-    //     return;
-    // }
+    pinMode(IRSENSOR, INPUT);
 
-    // ws.onEvent(onWsEvent);
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods",
+                                         "GET, PUT");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
 
-    // pinMode(IRSENSOR, INPUT);
-
-    // DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
-    // DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods",
-    //                                      "GET, PUT");
-    // DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
-
-    // server.addHandler(&ws);
+    server.addHandler(&ws);
 
     // server.on("/fs", HTTP_GET, [](AsyncWebServerRequest *request)
     //           {
@@ -179,146 +134,146 @@ void setup()
     //               request->send_P(200, "text/html", fileSystem.c_str());
     //           });
 
-    // // server.on("/csv", HTTP_GET, [](AsyncWebServerRequest *request)
-    // //           { request->send_P(200, "text/html", readCSV().c_str()); });
+    // server.on("/csv", HTTP_GET, [](AsyncWebServerRequest *request)
+    //           { request->send_P(200, "text/html", readCSV().c_str()); });
 
-    // server.on("/eclear", HTTP_DELETE, [](AsyncWebServerRequest *request)
-    //           {
-    //               clearEEprom();
-    //               delay(500);
-    //               ESP.restart();
-    //               request->send(200, "OK");
-    //           });
+    server.on("/eclear", HTTP_DELETE, [](AsyncWebServerRequest *request)
+              {
+                  clearEEprom();
+                  delay(500);
+                  ESP.restart();
+                  request->send(200, "OK");
+              });
 
-    // // server.on("/select", HTTP_GET, [](AsyncWebServerRequest *request)
-    // //           {
-    // //               String greet = select();
-    // //               request->send_P(200, "text/html", greet.c_str());
-    // //           });
+    server.on("/select", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                  String greet = select();
+                  request->send_P(200, "text/html", greet.c_str());
+              });
 
-    // server.on("/selectdrange", HTTP_GET, [](AsyncWebServerRequest *request)
-    //           {
-    //               int paramsNr = request->params();
-    //               String arguments[2];
+    server.on("/selectdrange", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                  int paramsNr = request->params();
+                  String arguments[2];
 
-    //               for (int i = 0; i < paramsNr; i++)
-    //               {
+                  for (int i = 0; i < paramsNr; i++)
+                  {
 
-    //                   AsyncWebParameter *p = request->getParam(i);
-    //                   arguments[i] = p->value();
-    //               }
+                      AsyncWebParameter *p = request->getParam(i);
+                      arguments[i] = p->value();
+                  }
 
-    //               String greet = selectDateRange(arguments[0].c_str(), arguments[1].c_str());
+                  String greet = selectDateRange(arguments[0].c_str(), arguments[1].c_str());
 
-    //               request->send(200, "text/html", greet.c_str());
-    //           });
+                  request->send(200, "text/html", greet.c_str());
+              });
 
-    // server.on("/delete", HTTP_GET, [](AsyncWebServerRequest *request)
-    //           {
-    //               deleteData();
-    //               request->send_P(200, "text/html", "deleted");
-    //           });
+    server.on("/delete", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                  deleteData();
+                  request->send_P(200, "text/html", "deleted");
+              });
 
-    // server.addHandler(new AsyncCallbackJsonWebHandler(
-    //     "/wconfig", [](AsyncWebServerRequest *request, JsonVariant &json)
-    //     {
-    //         const JsonObject &jsonObj = json.as<JsonObject>();
+    server.addHandler(new AsyncCallbackJsonWebHandler(
+        "/wconfig", [](AsyncWebServerRequest *request, JsonVariant &json)
+        {
+            const JsonObject &jsonObj = json.as<JsonObject>();
 
-    //         if (jsonObj["ssid"] && jsonObj["pass"])
-    //         {
+            if (jsonObj["ssid"] && jsonObj["pass"])
+            {
 
-    //             String qsid = jsonObj["ssid"];
-    //             String qpass = jsonObj["pass"];
+                String qsid = jsonObj["ssid"];
+                String qpass = jsonObj["pass"];
 
-    //             setCredentials(qsid, qpass);
+                setCredentials(qsid, qpass);
 
-    //             request->send(200, "OK");
-    //             delay(1000);
-    //             ESP.restart();
-    //         }
-    //         else
-    //         {
-    //             Serial.println("No Data provided");
-    //         }
-    //         request->send(200, "OK");
-    //     }));
+                request->send(200, "OK");
+                delay(1000);
+                ESP.restart();
+            }
+            else
+            {
+                Serial.println("No Data provided");
+            }
+            request->send(200, "OK");
+        }));
 
-    // server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+    server.serveStatic("/", LITTLEFS, "/").setDefaultFile("index.html");
 
-    // server.onNotFound([](AsyncWebServerRequest *request)
-    //                   {
-    //                       if (request->method() == HTTP_OPTIONS)
-    //                       {
-    //                           request->send(200);
-    //                       }
-    //                       else
-    //                       {
-    //                           Serial.println("Not found");
-    //                           request->send(404, "Not found");
-    //                       }
-    //                   });
-    // server.begin();
+    server.onNotFound([](AsyncWebServerRequest *request)
+                      {
+                          if (request->method() == HTTP_OPTIONS)
+                          {
+                              request->send(200);
+                          }
+                          else
+                          {
+                              Serial.println("Not found");
+                              request->send(404, "Not found");
+                          }
+                      });
+    server.begin();
     // MDNS.begin("esp32");
     // MDNS.addService("_http", "_tcp", 80);
     // MDNS.addServiceTxt("_http", "_tcp", "board", "ESP32");
-    // dht.begin();
+    dht.begin();
 
     // dbInit();
 }
 
 void loop()
 {
-    // int irSensor = digitalRead(IRSENSOR);
-    // float tempC = dht.readTemperature();
-    // float tempF = dht.readTemperature(true);
-    // String insertDate = "1632027049";
+    int irSensor = digitalRead(IRSENSOR);
+    float tempC = dht.readTemperature();
+    float tempF = dht.readTemperature(true);
+    String insertDate = "1632027049";
 
-    // if (!irSensor)
-    // {
+    if (!irSensor)
+    {
 
-    //     if (isnan(tempC) || isnan(tempF))
-    //     {
-    //         Serial.println("Failed to read sensor data");
-    //     }
-    //     else
-    //     {
-    //         // writeData += tempC;
-    //         // writeData += ",";
-    //         // writeData += tempF;
-    //         // writeFile(writeData);
-    //         if (tempF >= 92)
-    //         {
-    //             insert(insertDate.c_str(), String(tempC), String(tempF));
-    //             Serial.println("pushed");
-    //         }
-    //     }
-    // }
+        if (isnan(tempC) || isnan(tempF))
+        {
+            Serial.println("Failed to read sensor data");
+        }
+        else
+        {
+            // writeData += tempC;
+            // writeData += ",";
+            // writeData += tempF;
+            // writeFile(writeData);
+            if (tempF >= 92)
+            {
+                insert(insertDate.c_str(), String(tempC), String(tempF));
+                Serial.println("pushed");
+            }
+        }
+    }
 
-    // if (wsClient != nullptr && wsClient->canSend())
-    // {
+    if (wsClient != nullptr && wsClient->canSend())
+    {
 
-    //     String json = "{\"temperatureC\":";
-    //     json += !irSensor ? tempC : 0.0;
-    //     json += ",\"temperatureF\":";
-    //     json += !irSensor ? tempF : 0.0;
-    //     if (!irSensor && tempF >= 92)
-    //     {
-    //         json += ",";
-    //         json += "\"sensorData\":";
-    //         json += "{\"tempC\":";
-    //         json += tempC;
-    //         json += ",\"tempF\":";
-    //         json += tempF;
-    //         json += ",\"date\":";
-    //         json += "\"";
-    //         json += insertDate;
-    //         json += "\"}";
-    //     }
-    //     json += "}";
-    //     wsClient->text(json);
-    // }
+        String json = "{\"temperatureC\":";
+        json += !irSensor ? tempC : 0.0;
+        json += ",\"temperatureF\":";
+        json += !irSensor ? tempF : 0.0;
+        if (!irSensor && tempF >= 92)
+        {
+            json += ",";
+            json += "\"sensorData\":";
+            json += "{\"tempC\":";
+            json += tempC;
+            json += ",\"tempF\":";
+            json += tempF;
+            json += ",\"date\":";
+            json += "\"";
+            json += insertDate;
+            json += "\"}";
+        }
+        json += "}";
+        wsClient->text(json);
+    }
 
-    // ws.cleanupClients();
+    ws.cleanupClients();
 
-    // delay(1000);
+    delay(1000);
 }
