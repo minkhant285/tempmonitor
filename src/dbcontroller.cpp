@@ -6,8 +6,12 @@
 const char *data = "Callback function called";
 char *zErrMsg = 0;
 sqlite3 *db1;
+int rc;
+sqlite3_stmt *res;
+int rec_count = 0;
+const char *tail;
 
-String resultData;
+char resultData[10000];
 
 void dbInit()
 {
@@ -29,24 +33,7 @@ void dbInit()
 
 static int callback(void *data, int argc, char **argv, char **azColName)
 {
-    String result;
-    int i;
-    // Serial.printf("%s: ", (const char *)data);
-    for (i = 0; i < argc; i++)
-    {
-        result += i == 0 ? "{" : "";
-        result += "\"";
-        result += azColName[i];
-        result += "\"";
-        result += ":";
-        result += "\"";
-        result += argv[i];
-        result += "\"";
-        result += i == sizeof(argc) - 1 ? "}" : ",";
-        // Serial.printf("%s = %s  \n", azColName[i], argv[i] ? argv[i] : "NULL");
-    }
-    resultData += result;
-    resultData += ",";
+
     return 0;
 }
 
@@ -107,18 +94,39 @@ void deleteData()
 
 String select()
 {
-    int rc = db_exec(db1, "SELECT * FROM tempmonitor");
+
+    rc = sqlite3_prepare_v2(db1, "SELECT * FROM tempmonitor limit 100 offset 1", 1000, &res, &tail);
+    char *result = (char *)malloc(50000);
 
     if (rc != SQLITE_OK)
     {
+        Serial.printf("fail");
         sqlite3_close(db1);
-        Serial.println("fail to select  db");
     }
-    String selectData = "[";
-    selectData += resultData.substring(0, resultData.length() - 1);
-    selectData += "]";
-    resultData = "";
-    return selectData;
+    else
+    {
+        rec_count = 0;
+        while (sqlite3_step(res) == SQLITE_ROW)
+        {
+
+            strcat(result, "{\"tid\" :\"");
+            strcat(result, (const char *)sqlite3_column_text(res, 0));
+            strcat(result, "\",\"date\":\"");
+            strcat(result, (const char *)sqlite3_column_text(res, 1));
+            strcat(result, "\",\"tempC\":\"");
+            strcat(result, (const char *)sqlite3_column_text(res, 2));
+            strcat(result, "\",\"tempF\":\"");
+            strcat(result, (const char *)sqlite3_column_text(res, 3));
+            strcat(result, "\"},");
+            // Serial.printf("id => %s, date=> %s, TempC => %s, TempF => %s \n", (const char *)sqlite3_column_text(res, 0), (const char *)sqlite3_column_text(res, 1), (const char *)sqlite3_column_text(res, 2), (const char *)sqlite3_column_text(res, 3));
+            rec_count++;
+        }
+        sqlite3_finalize(res);
+    }
+    result[strlen(result) - 1] = '\0';
+
+    delete result;
+    return result;
 }
 
 String selectDateRange(String d1, String d2)
@@ -129,16 +137,36 @@ String selectDateRange(String d1, String d2)
     selectDrangeText += d2.c_str();
     selectDrangeText += "\'";
 
-    int rc = db_exec(db1, selectDrangeText.c_str());
+    rc = sqlite3_prepare_v2(db1, "SELECT * FROM tempmonitor limit 100 offset 1", 1000, &res, &tail);
+    char *result = (char *)malloc(50000);
 
     if (rc != SQLITE_OK)
     {
+        Serial.printf("fail");
         sqlite3_close(db1);
-        Serial.println("fail to select  db");
     }
-    String selectData = "[";
-    selectData += resultData.substring(0, resultData.length() - 1);
-    selectData += "]";
-    resultData = "";
-    return selectData;
+    else
+    {
+        rec_count = 0;
+        while (sqlite3_step(res) == SQLITE_ROW)
+        {
+
+            strcat(result, "{\"tid\" :\"");
+            strcat(result, (const char *)sqlite3_column_text(res, 0));
+            strcat(result, "\",\"date\":\"");
+            strcat(result, (const char *)sqlite3_column_text(res, 1));
+            strcat(result, "\",\"tempC\":\"");
+            strcat(result, (const char *)sqlite3_column_text(res, 2));
+            strcat(result, "\",\"tempF\":\"");
+            strcat(result, (const char *)sqlite3_column_text(res, 3));
+            strcat(result, "\"},");
+            // Serial.printf("id => %s, date=> %s, TempC => %s, TempF => %s \n", (const char *)sqlite3_column_text(res, 0), (const char *)sqlite3_column_text(res, 1), (const char *)sqlite3_column_text(res, 2), (const char *)sqlite3_column_text(res, 3));
+            rec_count++;
+        }
+        sqlite3_finalize(res);
+    }
+    result[strlen(result) - 1] = '\0';
+
+    delete result;
+    return result;
 }

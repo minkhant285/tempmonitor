@@ -146,7 +146,9 @@ void setup()
 
     server.on("/select", HTTP_GET, [](AsyncWebServerRequest *request)
               {
-                  String greet = select();
+                  String greet = "[";
+                  greet += select();
+                  greet += "]";
                   request->send_P(200, "text/html", greet.c_str());
               });
 
@@ -196,8 +198,18 @@ void setup()
             }
             request->send(200, "OK");
         }));
-
-    server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(SPIFFS, "/index.html"); });
+    server.on("/js/jquery.min.js", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(SPIFFS, "/js/jquery.min.js", "text/javascript"); });
+    server.on("/js/data.js", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(SPIFFS, "/js/data.js", "text/javascript"); });
+    server.on("/css/milligram.min.css", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(SPIFFS, "/css/milligram.min.css", "text/css"); });
+    server.on("/css/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(SPIFFS, "/css/style.css", "text/css"); });
+    server.on("/assets/person.svg", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(SPIFFS, "/assets/person.svg", "image/svg+xml"); });
 
     server.onNotFound([](AsyncWebServerRequest *request)
                       {
@@ -240,11 +252,11 @@ void loop()
             // writeData += ",";
             // writeData += tempF;
             // writeFile(writeData);
-            if (tempF >= 92)
-            {
-                insert(insertDate.c_str(), String(tempC), String(tempF));
-                Serial.println("pushed");
-            }
+            // if (tempF >= 92)
+            // {
+            insert(insertDate.c_str(), String(tempC), String(tempF));
+            // Serial.println("pushed");
+            // }
         }
     }
 
@@ -255,7 +267,7 @@ void loop()
         json += !irSensor ? tempC : 0.0;
         json += ",\"temperatureF\":";
         json += !irSensor ? tempF : 0.0;
-        if (!irSensor && tempF >= 92)
+        if (!irSensor)
         {
             json += ",";
             json += "\"sensorData\":";
