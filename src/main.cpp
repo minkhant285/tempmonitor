@@ -252,11 +252,11 @@ void loop()
             // writeData += ",";
             // writeData += tempF;
             // writeFile(writeData);
-            // if (tempF >= 92)
-            // {
-            insert(insertDate.c_str(), String(tempC), String(tempF));
-            // Serial.println("pushed");
-            // }
+            if (tempF >= 92)
+            {
+                insert(insertDate.c_str(), String(tempC), String(tempF));
+                Serial.println("pushed");
+            }
         }
     }
 
@@ -267,6 +267,13 @@ void loop()
         json += !irSensor ? tempC : 0.0;
         json += ",\"temperatureF\":";
         json += !irSensor ? tempF : 0.0;
+        json += ",\"totalHeap\":";
+        json += ESP.getHeapSize();
+        json += ",\"freeHeap\":";
+        json += ESP.getFreeHeap();
+        json += ",\"connectedWifi\":\"";
+        json += WiFi.SSID();
+        json += "\"";
         if (!irSensor)
         {
             json += ",";

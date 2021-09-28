@@ -38,7 +38,78 @@
             </script>
             <div class="header-container" id="cardRen"></div>
             <div class="body-container">
+                <div>
+                    <div
+                        class="leftDiv"
+                        style="
+                            height: 340px;
+                            margin-bottom: 10px;
+                            overflow: auto;
+                        "
+                    >
+                        <div
+                            style="
+                                background-color: beige;
+                                padding: 10px;
+                                border-bottom: solid 1px #ddd;
+                            "
+                        >
+                            Today
+                        </div>
+                    </div>
+
+                    <div class="leftDiv" style="height: 200px; overflow: auto">
+                        <div
+                            style="
+                                background-color: beige;
+                                padding: 10px;
+                                border-bottom: solid 1px #ddd;
+                            "
+                        >
+                            System Info
+                        </div>
+                        <div class="system-info-container">
+                            Storage:
+                            <div style="display: flex">
+                                <img src="./assets/hdd.svg" />
+                                <div id="myProgress">
+                                    <div id="storageBar">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="system-info-container">
+                            RAM:
+                            <div style="display: flex">
+                                <img src="./assets/ram.svg" />
+                                <div id="myProgress">
+                                    <div id="ramBar">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div id="div1" style="height: 550px; overflow: auto">
+                    <div
+                        style="
+                            background-color: beige;
+                            padding: 10px;
+                            border-bottom: solid 1px #ddd;
+                            display: flex;
+                            justify-content: space-between;
+                        "
+                    >
+                        <span>Found Cases</span>
+                        <div>
+                            <input
+                                style="height: 26px; margin: 0px"
+                                type="date"
+                                id="dpicker"
+                                name="daterange"
+                                value="2021-02-01"
+                                min="2021-01-01"
+                            />
+                        </div>
+                    </div>
                     <table class="table" id="myTable">
                         <thead>
                             <tr>
@@ -50,11 +121,6 @@
                         </thead>
                         <tbody id="tableBody"></tbody>
                     </table>
-                </div>
-                <div class="leftDiv" style="height: 550px; overflow: auto">
-                    <div class="progress">
-                        <div class="progress-value"></div>
-                    </div>
                 </div>
             </div>
         </div>

@@ -1,10 +1,21 @@
 var Socket;
 var host = "192.168.100.69";
 var lastId;
+var displaySotragePercent;
 function init() {
     Socket = new WebSocket("ws://" + host + ":80/ws");
     Socket.onmessage = function (event) {
         var data = JSON.parse(event.data);
+        console.log(data);
+        let ramPercent = (100 / (data.totalHeap / data.freeHeap)).toFixed(0);
+
+        $("#ramBar").text(ramPercent + "%");
+        $("#ramBar").width(ramPercent + "%");
+        if (ramPercent >= 90) {
+            $("#ramBar").css({ "background-color": "#f00" });
+        } else {
+            $("#ramBar").css({ "background-color": "#0483aa" });
+        }
         if (data.sensorData) {
             updateTable(data.sensorData);
         }
@@ -24,8 +35,8 @@ function init() {
 }
 
 function colorSwitch(tempValue) {
-    if (tempValue >= 32) {
-        return "bg-warning";
+    if (tempValue >= 90) {
+        return "red";
     }
     return "";
 }
@@ -40,8 +51,8 @@ $(document).ready(function () {
         .then((response) => response.json())
         .then((res) => {
             let sotragePercent = 100 / (res.totalSpace / res.usedBytes);
-
-            $("#storage").text(sotragePercent.toFixed(1) + "%");
+            displaySotragePercent = sotragePercent.toFixed(0);
+            $("#storage").text(sotragePercent.toFixed(0) + "%");
         });
 });
 
@@ -94,7 +105,6 @@ function getDBData() {
     })
         .then((response) => response.json())
         .then((res) => {
-            console.log(res);
             $("#people").text(res.length);
             lastId = res[res.length - 1]["tid"];
             for (var i = 0; i < res.length; i++) {
@@ -110,6 +120,7 @@ function getDBData() {
                 var td4 = "<td>" + res[i]["tempF"] + "</td>";
 
                 $("#tableBody").append(tr + td1 + td2 + td3 + td4);
+                move("storageBar");
             }
         });
 }
@@ -214,3 +225,23 @@ $(document).ready(function () {
     </div>`);
     });
 });
+
+var i = 0;
+function move(type) {
+    if (i == 0) {
+        i = 1;
+        var elem = document.getElementById("storageBar");
+        var width = 0;
+        var id = setInterval(frame, 10);
+        function frame() {
+            if (width >= displaySotragePercent) {
+                clearInterval(id);
+                i = 0;
+            } else {
+                width++;
+                elem.style.width = width + "%";
+                elem.innerHTML = width + "%";
+            }
+        }
+    }
+}
