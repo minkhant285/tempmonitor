@@ -138,8 +138,9 @@ String selectDateRange(String d1, String d2)
     selectDrangeText += d2.c_str();
     selectDrangeText += "\'";
 
-    rc = sqlite3_prepare_v2(db1, "SELECT * FROM tempmonitor limit 100 offset 1", 1000, &res, &tail);
+    rc = sqlite3_prepare_v2(db1, selectDrangeText.c_str(), 1000, &res, &tail);
     char *result = (char *)malloc(50000);
+    strcpy(result, "");
 
     if (rc != SQLITE_OK)
     {

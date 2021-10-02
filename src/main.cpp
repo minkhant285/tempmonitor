@@ -7,6 +7,7 @@
 #include <credentials.h>
 #include <DHT.h>
 #include <SPIFFS.h>
+#include <ESPmDNS.h>
 
 #define DHT11PIN 4
 #define FORMAT_SPIFFS_IF_FAILED true
@@ -164,8 +165,9 @@ void setup()
                       arguments[i] = p->value();
                   }
 
-                  String greet = selectDateRange(arguments[0].c_str(), arguments[1].c_str());
-
+                  String greet = "[";
+                  greet += selectDateRange(arguments[0].c_str(), arguments[1].c_str());
+                  greet += "]";
                   request->send(200, "text/html", greet.c_str());
               });
 
@@ -208,8 +210,8 @@ void setup()
               { request->send(SPIFFS, "/css/milligram.min.css", "text/css"); });
     server.on("/css/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
               { request->send(SPIFFS, "/css/style.css", "text/css"); });
-    server.on("/assets/person.svg", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send(SPIFFS, "/assets/person.svg", "image/svg+xml"); });
+    server.on("/assets/ram.svg", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(SPIFFS, "/assets/ram.svg", "image/svg+xml"); });
 
     server.onNotFound([](AsyncWebServerRequest *request)
                       {
@@ -224,9 +226,9 @@ void setup()
                           }
                       });
     server.begin();
-    // MDNS.begin("esp32");
-    // MDNS.addService("_http", "_tcp", 80);
-    // MDNS.addServiceTxt("_http", "_tcp", "board", "ESP32");
+    MDNS.begin("esp32");
+    MDNS.addService("_http", "_tcp", 80);
+    MDNS.addServiceTxt("_http", "_tcp", "board", "ESP32");
     dht.begin();
 
     dbInit();
@@ -237,7 +239,7 @@ void loop()
     int irSensor = digitalRead(IRSENSOR);
     float tempC = dht.readTemperature();
     float tempF = dht.readTemperature(true);
-    String insertDate = "1632027049";
+    String insertDate = "1633167852";
 
     if (!irSensor)
     {

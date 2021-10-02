@@ -6,7 +6,6 @@ function init() {
     Socket = new WebSocket("ws://" + host + ":80/ws");
     Socket.onmessage = function (event) {
         var data = JSON.parse(event.data);
-        console.log(data);
         let ramPercent = (100 / (data.totalHeap / data.freeHeap)).toFixed(0);
 
         $("#ramBar").text(ramPercent + "%");
@@ -42,6 +41,19 @@ function colorSwitch(tempValue) {
 }
 
 $(document).ready(function () {
+    let selector = $("#dpicker");
+    selector.val(new Date().toISOString().split("T")[0]);
+    selector.change(() => {
+        var dt = new Date(selector.val());
+        let ye = new Intl.DateTimeFormat("en", { year: "numeric" }).format(dt);
+        let mo = new Intl.DateTimeFormat("en", { month: "2-digit" }).format(dt);
+        let da = new Intl.DateTimeFormat("en", { day: "2-digit" }).format(dt);
+
+        getDBData(`${ye}-${mo}-${da}`, `${ye}-${mo}-${da}`);
+    });
+});
+
+$(document).ready(function () {
     fetch("http://" + host + "/fs", {
         headers: {
             "Content-Type": "application/json",
@@ -57,17 +69,17 @@ $(document).ready(function () {
 });
 
 $(function () {
-    $("#myform").submit(function (e) {
+    $("#myForm").submit(function (e) {
         e.preventDefault();
 
         let ssid = $("#ssid").val();
         let pass = $("#password").val();
 
-        gg(ssid, pass);
+        updateWifiData(ssid, pass);
     });
 });
 
-function gg(ssid, pass) {
+function updateWifiData(ssid, pass) {
     fetch("http://" + host + "/wconfig", {
         method: "PUT",
         body: JSON.stringify({ ssid: ssid, pass: pass }), // string or object
@@ -96,8 +108,8 @@ function updateTable(sensorData) {
     $("#tableBody").append(tr + td1 + td2 + td3 + td4);
 }
 
-function getDBData() {
-    fetch("http://" + host + "/select", {
+function getDBData(date1, date2) {
+    fetch(`http://${host}/selectdrange?d1=${date1}&d2=${date2}`, {
         headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
@@ -105,23 +117,28 @@ function getDBData() {
     })
         .then((response) => response.json())
         .then((res) => {
-            $("#people").text(res.length);
-            lastId = res[res.length - 1]["tid"];
-            for (var i = 0; i < res.length; i++) {
-                var tr = `<tr class=${colorSwitch(res[i]["tempF"])}>`;
-                var td1 = "<td>" + res[i]["tid"] + "</td>";
-                var td2 =
-                    "<td>" +
-                    new Date(
-                        new Date(0).setUTCSeconds(res[i]["date"])
-                    ).toLocaleString() +
-                    "</td>";
-                var td3 = "<td>" + res[i]["tempC"] + "</td>";
-                var td4 = "<td>" + res[i]["tempF"] + "</td>";
+            if (res.length == 0) {
+                $("#tableBody").empty();
+            } else {
+                $("#tableBody").empty();
+                $("#people").text(res.length);
+                lastId = res[res.length - 1]["tid"];
+                for (var i = 0; i < res.length; i++) {
+                    var tr = `<tr class=${colorSwitch(res[i]["tempF"])}>`;
+                    var td1 = "<td>" + res[i]["tid"] + "</td>";
+                    var td2 =
+                        "<td>" +
+                        new Date(
+                            new Date(0).setUTCSeconds(res[i]["date"])
+                        ).toLocaleString() +
+                        "</td>";
+                    var td3 = "<td>" + res[i]["tempC"] + "</td>";
+                    var td4 = "<td>" + res[i]["tempF"] + "</td>";
 
-                $("#tableBody").append(tr + td1 + td2 + td3 + td4);
-                move("storageBar");
+                    $("#tableBody").append(tr + td1 + td2 + td3 + td4);
+                }
             }
+            move("storageBar");
         });
 }
 
@@ -245,3 +262,29 @@ function move(type) {
         }
     }
 }
+
+// Get the modal
+var modal = document.getElementById("myModal");
+
+// Get the button that opens the modal
+var btn = document.getElementById("myBtn");
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks the button, open the modal
+btn.onclick = function () {
+    modal.style.display = "block";
+};
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function () {
+    modal.style.display = "none";
+};
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function (event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+};

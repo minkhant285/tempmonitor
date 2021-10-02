@@ -1,2 +1,2 @@
 insert into tempmonitor (date,tempC,tempF) VALUES ("1631781339",10.1,20.1);
-SELECT * from tempmonitor where date(date/1000,'unixepoch','localtime') >= '9/16/2021' AND date(date/1000,'unixepoch','localtime') <= '9/18/2021' ;
+SELECT * from tempmonitor where date(date,'unixepoch','localtime') >= '2021-09-16' AND date(date,'unixepoch','localtime') <= '2021-09-17' ;

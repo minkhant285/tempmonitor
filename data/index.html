@@ -14,7 +14,7 @@
         <div class="main-container">
             <div class="topnav" id="myTopnav">
                 <a class="active">Logo</a>
-                <a href="#news">Setting</a>
+                <a id="myBtn">Setting</a>
                 <a href="#contact">Contact</a>
                 <a href="#about">About</a>
                 <a
@@ -22,7 +22,22 @@
                     class="icon"
                     onclick="myFunction()"
                 >
-                    <i><img src="assets/person.svg" height="19" /></i>
+                    <i
+                        ><svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            style="color: white"
+                            width="20"
+                            height="20"
+                            fill="currentColor"
+                            class="bi bi-list"
+                            viewBox="0 0 16 16"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"
+                            />
+                        </svg>
+                    </i>
                 </a>
             </div>
 
@@ -71,7 +86,19 @@
                         <div class="system-info-container">
                             Storage:
                             <div style="display: flex">
-                                <img src="./assets/hdd.svg" />
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="35"
+                                    height="35"
+                                    fill="currentColor"
+                                    class="bi bi-hdd-rack-fill"
+                                    viewBox="0 0 16 16"
+                                    style="color: rgb(112, 179, 68)"
+                                >
+                                    <path
+                                        d="M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h1v2H2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2h-1V7h1a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm-2 7a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zM12 7v2H4V7h8z"
+                                    />
+                                </svg>
                                 <div id="myProgress">
                                     <div id="storageBar">0%</div>
                                 </div>
@@ -105,8 +132,10 @@
                                 type="date"
                                 id="dpicker"
                                 name="daterange"
-                                value="2021-02-01"
-                                min="2021-01-01"
+                                value="01/02/2021"
+                                min="01/02/2021"
+                                required
+                                pattern="\d{2}-\d{2}-\d{4}"
                             />
                         </div>
                     </div>
@@ -121,6 +150,39 @@
                         </thead>
                         <tbody id="tableBody"></tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+        <!-- The Modal -->
+        <div id="myModal" class="modal">
+            <!-- Modal content -->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span style="font-size: 1.5em">Modal Header</span>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="myForm">
+                        <fieldset>
+                            <label for="nameField">WIFI Name:</label>
+                            <input
+                                type="text"
+                                placeholder="WIFI Name"
+                                id="ssid"
+                                required
+                            />
+                            <label for="nameField">Password</label>
+                            <input
+                                type="password"
+                                placeholder="Password"
+                                id="password"
+                                required
+                            />
+                        </fieldset>
+
+                        <button type="reset">Cancel</button>
+                        <button type="submit">Save</button>
+                    </form>
                 </div>
             </div>
         </div>
